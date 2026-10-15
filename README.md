@@ -16,7 +16,7 @@ VYRON is a web-based project designed to help users compare images and explore v
 
 ## Try VYRON **Live app:** [Open VYRON — DiffLens AI](https://vyron-difflens-ai.streamlit.app)
 
-**Live app:** [Open VYRON — DiffLens AI](https://vyron-difflens-ai.streamlit.app)
+
 ## Technology
 
 - Python
