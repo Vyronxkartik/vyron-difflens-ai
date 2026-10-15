@@ -1,6 +1,10 @@
 
 import streamlit as st
-
+st.set_page_config(
+    page_title="VYRON — DiffLens AI | Image Comparison",
+    page_icon="🔎",
+    layout="wide"
+)
 st.set_page_config(
     page_title="VYRON | DiffLens AI",
     page_icon="🔎",
