@@ -324,7 +324,7 @@ def analyze(bytes_a: bytes, bytes_b: bytes, p: dict) -> dict:
         area = cv2.contourArea(c)
         if area < min_px:
             continue
-x, y, bw, bh = cv2.boundingRect(c)
+        x, y, bw, bh = cv2.boundingRect(c)
         cv2.drawContours(final_mask, [c], -1, 255, -1)
         sub_d = diff[y:y + bh, x:x + bw]
         sub_m = mask[y:y + bh, x:x + bw] > 0
