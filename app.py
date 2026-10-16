@@ -462,6 +462,8 @@ params = dict(size_mode=size_mode, max_side=max_side, align=align, light=light, 
               rot_b=rot_b, flip_h=flip_h, flip_v=flip_v, bright_b=bright_b, contrast_b=contrast_b,
               sens=sens, otsu=otsu, blur=blur, clean=clean, min_area=float(min_area), border=border,
               box_color=box_color, box_thick=box_thick)
+up_a = st.file_uploader("Image A (original)", type=["png", "jpg", "jpeg", "webp", "bmp"], key="vyron_up_a")
+up_b = st.file_uploader("Image B (changed)", type=["png", "jpg", "jpeg", "webp", "bmp"], key="vyron_up_b")
 if not (up_a and up_b):
     st.info("Upload two images to start. **Balanced** works for most cases; use **Strict** for screenshots "
             "and **Tolerant** for photos. Open the sidebar (top-left arrow) for all settings.")
