@@ -64,7 +64,7 @@ def file_info(f):
 def load_image(data: bytes, max_side: int) -> np.ndarray:
     """Load, fix EXIF rotation, flatten transparency on white, RGB uint8."""
     im = ImageOps.exif_transpose(Image.open(io.BytesIO(data)))
-    if im.mode in ("RGBA", "LA") or (im.mode == "P" and "transparency" in im.info)
+    if im.mode in ("RGBA", "LA") or (im.mode == "P" and "transparency" in im.info):
         im = im.convert("RGBA")
         bg = Image.new("RGBA", im.size, (255, 255, 255, 255))
         bg.alpha_composite(im)
