@@ -1,5 +1,5 @@
 """
-VYRON - DiffLens AI  |  Visual Intelligence Workspace
+VYRON - DiffLens AI  |  Visual  Workspace
 Professional image comparison: robust alignment, SSIM + perceptual colour (Lab)
 change detection, heatmaps, edges, histograms, flicker GIF, full reports.
 """
