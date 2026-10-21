@@ -1,6 +1,6 @@
-streamlit
-numpy
-pandas
-Pillow
-opencv-python-headless
-scikit-image
+streamlit>=1.40
+numpy>=1.26
+pandas>=2.0
+pillow>=10.0
+opencv-python-headless>=4.9
+scikit-image>=0.22
