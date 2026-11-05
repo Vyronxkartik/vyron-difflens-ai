@@ -11,7 +11,7 @@ ASSETS = Path(__file__).parent
 
 def load_css() -> None:
     css = (ASSETS / "Styles").read_text(encoding="utf-8")
-    st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
+    st.markdown(f"<style>{css}</style>", unsafe_allow_html=True) 
 
 
 def hero() -> None:
