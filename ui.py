@@ -291,3 +291,24 @@ def render_footer(name: str = OWNER_NAME):
         f'<div class="footer reveal">Designed &amp; built by <b>{name}</b> · {APP_NAME} © 2026</div>',
         unsafe_allow_html=True,
     )
+def hero(*args, **kwargs):
+    render_header()
+
+
+def footer(*args, **kwargs):
+    render_footer()
+
+
+def card(title="", body="", icon=""):
+    glass_card(title, body, icon)
+
+
+def __getattr__(name):
+    # any other missing ui.xxx() call does nothing instead of crashing
+    if name.startswith("__"):
+        raise AttributeError(name)
+
+    def _fallback(*args, **kwargs):
+        pass
+
+    return _fallback
