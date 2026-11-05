@@ -6,11 +6,11 @@ from pathlib import Path
 import streamlit as st
 import streamlit.components.v1 as components
 
-ASSETS = Path(__file__).parent / "assets"
+ASSETS = Path(__file__).parent
 
 
 def load_css() -> None:
-    css = (ASSETS / "styles.css").read_text(encoding="utf-8")
+    css = (ASSETS / "Styles").read_text(encoding="utf-8")
     st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
 
 
