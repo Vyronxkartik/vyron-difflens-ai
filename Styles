@@ -1,0 +1,185 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Manrope:wght@400;500;600&display=swap');
+
+:root {
+  --ink: #101436;
+  --deep: #171c4a;
+  --panel: rgba(255, 255, 255, 0.055);
+  --panel-line: rgba(160, 170, 255, 0.18);
+  --violet: #8b7bff;
+  --aqua: #46e3d1;
+  --coral: #ff6a7a;
+  --mist: #e9ecff;
+  --muted: #a3a9d6;
+}
+
+html, body, .stApp, [class*="css"] {
+  font-family: 'Manrope', system-ui, sans-serif;
+  color: var(--mist);
+}
+
+h1, h2, h3, h4, .vy-display {
+  font-family: 'Sora', system-ui, sans-serif !important;
+  letter-spacing: -0.01em;
+  color: var(--mist);
+}
+
+/* ---------- drifting aurora background ---------- */
+.stApp {
+  background: var(--ink);
+}
+.stApp::before, .stApp::after {
+  content: "";
+  position: fixed;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.45;
+}
+.stApp::before {
+  width: 55vmax; height: 55vmax;
+  left: -15vmax; top: -20vmax;
+  background: radial-gradient(circle, var(--violet), transparent 65%);
+  animation: drift-a 26s ease-in-out infinite alternate;
+}
+.stApp::after {
+  width: 45vmax; height: 45vmax;
+  right: -12vmax; bottom: -18vmax;
+  background: radial-gradient(circle, var(--aqua), transparent 65%);
+  opacity: 0.28;
+  animation: drift-b 32s ease-in-out infinite alternate;
+}
+@keyframes drift-a { to { transform: translate(18vmax, 12vmax) scale(1.15); } }
+@keyframes drift-b { to { transform: translate(-16vmax, -10vmax) scale(1.2); } }
+
+[data-testid="stAppViewContainer"] > .main, [data-testid="stHeader"] { position: relative; z-index: 1; }
+[data-testid="stHeader"] { background: transparent; }
+#MainMenu, footer { visibility: hidden; }
+.block-container { padding-top: 1.6rem; max-width: 1100px; }
+
+/* ---------- hero ---------- */
+.vy-hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 26px 24px;
+  margin-bottom: 18px;
+  border: 1px solid var(--panel-line);
+  border-radius: 22px;
+  background: linear-gradient(135deg, rgba(139, 123, 255, 0.16), rgba(70, 227, 209, 0.07));
+  overflow: hidden;
+}
+.vy-lens {
+  position: relative;
+  flex: 0 0 74px;
+  width: 74px; height: 74px;
+}
+.vy-lens i {
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  border: 2px solid var(--aqua);
+  opacity: 0;
+  animation: lens-pulse 3.6s ease-out infinite;
+}
+.vy-lens i:nth-child(2) { animation-delay: 1.2s; border-color: var(--violet); }
+.vy-lens i:nth-child(3) { animation-delay: 2.4s; border-color: var(--coral); }
+.vy-lens b {
+  position: absolute; inset: 22px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff, var(--aqua) 45%, var(--violet));
+  box-shadow: 0 0 24px rgba(70, 227, 209, 0.65);
+}
+@keyframes lens-pulse {
+  0%   { transform: scale(0.35); opacity: 0.9; }
+  100% { transform: scale(1.25); opacity: 0; }
+}
+.vy-hero h1 { margin: 0; font-size: 2rem; line-height: 1.1; }
+.vy-hero p  { margin: 6px 0 0; color: var(--muted); font-size: 0.98rem; max-width: 52ch; }
+
+/* ---------- panels, cards ---------- */
+.vy-card {
+  border: 1px solid var(--panel-line);
+  background: var(--panel);
+  border-radius: 16px;
+  padding: 14px 16px;
+  backdrop-filter: blur(8px);
+}
+.vy-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)); gap: 10px; margin: 6px 0 14px; }
+.vy-stat .v { font-family: 'Sora', sans-serif; font-size: 1.45rem; font-weight: 600; }
+.vy-stat .l { color: var(--muted); font-size: 0.82rem; margin-top: 2px; }
+.vy-stat.warn .v { color: var(--coral); }
+.vy-stat.good .v { color: var(--aqua); }
+
+.vy-chip {
+  display: inline-block; padding: 3px 10px; border-radius: 999px;
+  font-size: 0.78rem; font-weight: 600;
+  border: 1px solid var(--panel-line);
+}
+.vy-chip.High   { color: var(--coral); border-color: rgba(255,106,122,.5); }
+.vy-chip.Medium { color: #ffc46b;     border-color: rgba(255,196,107,.5); }
+.vy-chip.Low    { color: var(--aqua); border-color: rgba(70,227,209,.5); }
+
+/* ---------- streamlit widgets ---------- */
+[data-testid="stSidebar"] {
+  background: rgba(16, 20, 54, 0.92);
+  border-right: 1px solid var(--panel-line);
+}
+[data-testid="stFileUploader"] section {
+  background: var(--panel);
+  border: 1.5px dashed rgba(139, 123, 255, 0.55);
+  border-radius: 16px;
+  transition: border-color .2s, background .2s;
+}
+[data-testid="stFileUploader"] section:hover {
+  border-color: var(--aqua);
+  background: rgba(70, 227, 209, 0.07);
+}
+.stButton > button, .stDownloadButton > button {
+  border-radius: 12px;
+  border: 1px solid var(--panel-line);
+  background: linear-gradient(135deg, var(--violet), #6a5bf0);
+  color: #fff;
+  font-weight: 600;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.stButton > button:hover, .stDownloadButton > button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px rgba(139, 123, 255, 0.4);
+  color: #fff; border-color: var(--aqua);
+}
+.stButton > button:focus-visible, .stDownloadButton > button:focus-visible {
+  outline: 2px solid var(--aqua); outline-offset: 2px;
+}
+.stTabs [data-baseweb="tab-list"] { gap: 6px; }
+.stTabs [data-baseweb="tab"] { border-radius: 10px 10px 0 0; color: var(--muted); }
+.stTabs [aria-selected="true"] { color: var(--mist); }
+[data-testid="stChatMessage"] {
+  background: var(--panel);
+  border: 1px solid var(--panel-line);
+  border-radius: 16px;
+}
+[data-testid="stChatInput"] { border-radius: 14px; }
+
+/* scanning shimmer shown while a comparison runs */
+.vy-scan {
+  position: relative; height: 6px; border-radius: 6px; overflow: hidden;
+  background: var(--panel-line); margin: 8px 0 14px;
+}
+.vy-scan::after {
+  content: ""; position: absolute; inset: 0; width: 35%;
+  background: linear-gradient(90deg, transparent, var(--aqua), transparent);
+  animation: scan 1.1s linear infinite;
+}
+@keyframes scan { from { transform: translateX(-100%); } to { transform: translateX(300%); } }
+
+@media (max-width: 640px) {
+  .vy-hero { padding: 18px 16px; gap: 14px; }
+  .vy-hero h1 { font-size: 1.5rem; }
+  .vy-lens { flex-basis: 56px; width: 56px; height: 56px; }
+  .vy-lens b { inset: 17px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stApp::before, .stApp::after, .vy-lens i, .vy-scan::after { animation: none !important; }
+}
