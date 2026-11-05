@@ -33,3 +33,5 @@ VYRON is actively under development. More visual analysis tools are planned.
 
 ---
 Built as a learning and development project.
+
+Last updated: November 2026
