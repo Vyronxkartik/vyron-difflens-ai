@@ -1,145 +1,261 @@
-"""VYRON UI helpers: styling, hero, animated score ring and swipe comparer."""
-from __future__ import annotations
+# ui.py
+# Vyron DiffLense AI - Modern UI with professional scrolling animations
 
-from pathlib import Path
+import gradio as gr
+import time
 
-import streamlit as st
-import streamlit.components.v1 as components
+# ====================== CUSTOM CSS ======================
+custom_css = """
+/* ===== Global Smooth Scroll ===== */
+html {
+    scroll-behavior: smooth;
+}
 
-ASSETS = Path(__file__).parent
+/* ===== Base Theme ===== */
+.gradio-container {
+    background: #0a0a0f !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+    max-width: 1200px !important;
+    margin: 0 auto !important;
+}
+
+/* ===== Sticky Header ===== */
+.header-bar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(10, 10, 15, 0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 16px 24px;
+    margin-bottom: 32px;
+}
+
+/* ===== Reveal Animation Classes ===== */
+.reveal {
+    opacity: 0;
+    transform: translateY(48px) scale(0.96);
+    transition: 
+        opacity 0.85s cubic-bezier(0.22, 1, 0.36, 1),
+        transform 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: opacity, transform;
+}
+
+.reveal.visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+/* Stagger delays */
+.reveal.delay-1 { transition-delay: 0.08s; }
+.reveal.delay-2 { transition-delay: 0.16s; }
+.reveal.delay-3 { transition-delay: 0.24s; }
+.reveal.delay-4 { transition-delay: 0.32s; }
+
+/* ===== Cards ===== */
+.card {
+    background: #12121a;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+    transition: border-color 0.3s ease, transform 0.3s ease;
+}
+
+.card:hover {
+    border-color: rgba(99, 102, 241, 0.4);
+    transform: translateY(-2px);
+}
+
+/* ===== Chat Area ===== */
+.chatbot {
+    min-height: 480px !important;
+    border-radius: 16px !important;
+    background: #0f0f16 !important;
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+/* ===== Input ===== */
+.input-row {
+    background: #12121a;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 8px;
+}
+
+/* ===== Buttons ===== */
+.primary-btn {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+    border: none !important;
+    border-radius: 12px !important;
+    font-weight: 600 !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.primary-btn:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.35) !important;
+}
+
+/* ===== Section Titles ===== */
+.section-title {
+    font-size: 1.4rem;
+    font-weight: 650;
+    letter-spacing: -0.02em;
+    margin-bottom: 16px;
+    color: #f1f1f5;
+}
+
+/* ===== Subtle Parallax helper ===== */
+.parallax-slow {
+    transition: transform 0.1s linear;
+}
+"""
+
+# ====================== JS for Scroll Animations ======================
+scroll_js = """
+function initScrollAnimations() {
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+            }
+        });
+    }, {
+        threshold: 0.12,
+        rootMargin: "0px 0px -60px 0px"
+    });
+
+    document.querySelectorAll('.reveal').forEach(el => {
+        observer.observe(el);
+    });
+}
+
+// Run after Gradio loads
+document.addEventListener('DOMContentLoaded', initScrollAnimations);
+setTimeout(initScrollAnimations, 800);   // safety for Gradio dynamic load
+setTimeout(initScrollAnimations, 1800);
+"""
+
+# ====================== UI BUILD ======================
+def create_ui(chat_fn, clear_fn=None):
+    with gr.Blocks(
+        css=custom_css,
+        js=scroll_js,
+        title="Vyron DiffLense AI",
+        theme=gr.themes.Base(
+            primary_hue="indigo",
+            neutral_hue="slate",
+            font=["Inter", "system-ui", "sans-serif"]
+        )
+    ) as demo:
+
+        # Sticky Header
+        with gr.Row(elem_classes="header-bar"):
+            gr.Markdown(
+                """
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div style="width:36px; height:36px; background:linear-gradient(135deg,#6366f1,#8b5cf6); 
+                                border-radius:10px; display:flex; align-items:center; justify-content:center;
+                                font-weight:700; color:white; font-size:18px;">V</div>
+                    <div>
+                        <div style="font-size:1.25rem; font-weight:700; letter-spacing:-0.03em; color:#f8f8ff;">
+                            Vyron DiffLense AI
+                        </div>
+                        <div style="font-size:0.8rem; color:#94a3b8; margin-top:1px;">
+                            Professional visual intelligence
+                        </div>
+                    </div>
+                </div>
+                """,
+                elem_classes="reveal"
+            )
+
+        # Hero / Intro Section
+        with gr.Column(elem_classes="reveal delay-1"):
+            gr.Markdown(
+                """
+                <div class="section-title">What can I help you create or analyze?</div>
+                <p style="color:#94a3b8; margin-top:-8px; margin-bottom:24px;">
+                    Upload images, describe ideas, or ask questions. DiffLense processes with high precision.
+                </p>
+                """
+            )
+
+        # Main Chat Card
+        with gr.Column(elem_classes=["card", "reveal", "delay-2"]):
+            chatbot = gr.Chatbot(
+                label="",
+                height=520,
+                show_label=False,
+                elem_classes="chatbot",
+                avatar_images=(None, "https://api.dicebear.com/7.x/bottts/svg?seed=Vyron"),
+                bubble_full_width=False
+            )
+
+            with gr.Row(elem_classes="input-row"):
+                msg = gr.Textbox(
+                    placeholder="Describe an image, ask for analysis, or give a creative direction...",
+                    show_label=False,
+                    container=False,
+                    scale=6
+                )
+                submit_btn = gr.Button("Send", elem_classes="primary-btn", scale=1)
+
+        # Feature Cards (scroll reveal)
+        with gr.Row():
+            with gr.Column(elem_classes=["card", "reveal", "delay-1"]):
+                gr.Markdown("### 🔍 Precise Analysis")
+                gr.Markdown("Deep visual understanding with structured insights.")
+
+            with gr.Column(elem_classes=["card", "reveal", "delay-2"]):
+                gr.Markdown("### 🎨 Creative Generation")
+                gr.Markdown("High-quality diffusion-style outputs guided by your intent.")
+
+            with gr.Column(elem_classes=["card", "reveal", "delay-3"]):
+                gr.Markdown("### ⚡ Fast Iteration")
+                gr.Markdown("Refine results quickly with natural language.")
+
+        # Footer
+        gr.Markdown(
+            """
+            <div style="text-align:center; color:#64748b; font-size:0.85rem; margin-top:48px; padding-bottom:40px;" 
+                 class="reveal delay-4">
+                Vyron DiffLense AI • Built for clarity and speed
+            </div>
+            """,
+        )
+
+        # Event handlers
+        def user_message(user_msg, history):
+            return "", history + [[user_msg, None]]
+
+        def bot_response(history):
+            user_msg = history[-1][0]
+            # Call your real engine here
+            response = chat_fn(user_msg) if chat_fn else "Processing with DiffLense..."
+            history[-1][1] = response
+            return history
+
+        msg.submit(user_message, [msg, chatbot], [msg, chatbot], queue=False).then(
+            bot_response, chatbot, chatbot
+        )
+        submit_btn.click(user_message, [msg, chatbot], [msg, chatbot], queue=False).then(
+            bot_response, chatbot, chatbot
+        )
+
+        if clear_fn:
+            clear_btn = gr.Button("Clear conversation", variant="secondary")
+            clear_btn.click(clear_fn, None, chatbot)
+
+    return demo
 
 
-def load_css() -> None:
-    for p in ASSETS.rglob("*"):
-        if p.is_file() and p.name.lower().startswith("styles"):
-            css = p.read_text(encoding="utf-8")
-            st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
-            return
+# ====================== Example usage ======================
+if __name__ == "__main__":
+    def dummy_chat(message):
+        time.sleep(0.6)
+        return f"**DiffLense response:**\n\nI analyzed your request: *{message}*\n\nHere's a refined professional interpretation."
 
-def hero() -> None:
-    st.markdown(
-        """
-        <div class="vy-hero">
-          <div class="vy-lens"><i></i><i></i><i></i><b></b></div>
-          <div>
-            <h1>VYRON <span style="color:var(--muted);font-weight:500">DiffLens AI</span></h1>
-            <p>Drop in two images. VYRON lines them up, finds every change and explains it.</p>
-          </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-def scanning_bar():
-    return st.markdown('<div class="vy-scan"></div>', unsafe_allow_html=True)
-
-
-def stat_cards(items: list[tuple[str, str, str]]) -> None:
-    """items: (value, label, tone) where tone is '', 'good' or 'warn'."""
-    cards = "".join(
-        f'<div class="vy-card vy-stat {tone}"><div class="v">{v}</div><div class="l">{l}</div></div>'
-        for v, l, tone in items
-    )
-    st.markdown(f'<div class="vy-stats">{cards}</div>', unsafe_allow_html=True)
-
-
-def score_ring(score: float, verdict: str) -> None:
-    """Animated ring that counts up to the similarity score."""
-    color = "#46e3d1" if score >= 92 else "#ffc46b" if score >= 60 else "#ff6a7a"
-    html = f"""
-    <style>
-      body {{ margin:0; background:transparent; color:#e9ecff; font-family:'Manrope',system-ui,sans-serif; }}
-      .wrap {{ display:flex; align-items:center; gap:20px; padding:4px 2px; }}
-      svg {{ width:130px; height:130px; transform:rotate(-90deg); flex:0 0 130px; }}
-      .track {{ stroke:rgba(160,170,255,.18); }}
-      .bar {{ stroke:{color}; stroke-linecap:round; filter:drop-shadow(0 0 6px {color}88);
-              stroke-dasharray:326.7; stroke-dashoffset:326.7;
-              transition:stroke-dashoffset 1.4s cubic-bezier(.2,.8,.2,1); }}
-      .num {{ font-size:2.6rem; font-weight:700; line-height:1; font-family:'Sora',system-ui,sans-serif; }}
-      .lbl {{ color:#a3a9d6; font-size:.9rem; margin-top:6px; }}
-      .verdict {{ font-size:1.2rem; font-weight:600; margin-top:2px; color:{color}; }}
-    </style>
-    <div class="wrap">
-      <svg viewBox="0 0 120 120" aria-hidden="true">
-        <circle class="track" cx="60" cy="60" r="52" fill="none" stroke-width="10"/>
-        <circle id="bar" class="bar" cx="60" cy="60" r="52" fill="none" stroke-width="10"/>
-      </svg>
-      <div>
-        <div class="num"><span id="n">0</span><span style="font-size:1.1rem;color:#a3a9d6"> / 100</span></div>
-        <div class="verdict">{verdict}</div>
-        <div class="lbl">Similarity score</div>
-      </div>
-    </div>
-    <script>
-      const target = {score:.1f}, bar = document.getElementById('bar'), n = document.getElementById('n');
-      const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-      requestAnimationFrame(() => {{ bar.style.strokeDashoffset = 326.7 * (1 - target / 100); }});
-      if (reduce) {{ n.textContent = target.toFixed(1); }}
-      else {{
-        const t0 = performance.now(), dur = 1400;
-        (function tick(t) {{
-          const p = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - p, 3);
-          n.textContent = (target * e).toFixed(1);
-          if (p < 1) requestAnimationFrame(tick);
-        }})(t0);
-      }}
-    </script>
-    """
-    components.html(html, height=150)
-
-
-def swipe_compare(a_b64: str, b_b64: str, label_a: str = "A", label_b: str = "B", height: int = 460) -> None:
-    """Drag-to-reveal comparer. Sweeps once on load, then follows your finger/mouse."""
-    html = f"""
-    <style>
-      body {{ margin:0; background:transparent; font-family:'Manrope',system-ui,sans-serif; }}
-      #box {{ position:relative; height:{height - 10}px; border-radius:16px; overflow:hidden; touch-action:pan-y;
-              background:#0b0e29; border:1px solid rgba(160,170,255,.2); user-select:none; -webkit-user-select:none; cursor:ew-resize; }}
-      .layer {{ position:absolute; inset:0; width:100%; height:100%; object-fit:contain; pointer-events:none; }}
-      #top {{ clip-path:inset(0 50% 0 0); }}
-      #bar {{ position:absolute; top:0; bottom:0; left:50%; width:3px; margin-left:-1.5px; background:#fff;
-              box-shadow:0 0 14px rgba(70,227,209,.9); pointer-events:none; }}
-      #knob {{ position:absolute; top:50%; left:50%; width:44px; height:44px; margin:-22px 0 0 -22px; border-radius:50%;
-               background:#8b7bff; border:3px solid #fff; display:flex; align-items:center; justify-content:center;
-               color:#fff; font-size:15px; box-shadow:0 4px 18px rgba(0,0,0,.45); pointer-events:none; }}
-      .tag {{ position:absolute; top:10px; padding:4px 11px; border-radius:999px; font-size:12px; font-weight:700;
-              color:#fff; background:rgba(16,20,54,.78); border:1px solid rgba(160,170,255,.35); pointer-events:none; }}
-    </style>
-    <div id="box" role="slider" aria-label="Compare images" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50" tabindex="0">
-      <img class="layer" src="data:image/jpeg;base64,{b_b64}" alt="{label_b}">
-      <img class="layer" id="top" src="data:image/jpeg;base64,{a_b64}" alt="{label_a}">
-      <span class="tag" style="left:10px">{label_a}</span><span class="tag" style="right:10px">{label_b}</span>
-      <div id="bar"></div><div id="knob">&#8596;</div>
-    </div>
-    <script>
-      const box = document.getElementById('box'), topImg = document.getElementById('top'),
-            bar = document.getElementById('bar'), knob = document.getElementById('knob');
-      let pct = 50, touched = false;
-      function set(p) {{
-        pct = Math.max(0, Math.min(100, p));
-        topImg.style.clipPath = 'inset(0 ' + (100 - pct) + '% 0 0)';
-        bar.style.left = knob.style.left = pct + '%';
-        box.setAttribute('aria-valuenow', Math.round(pct));
-      }}
-      function fromEvent(e) {{ const r = box.getBoundingClientRect(); set((e.clientX - r.left) / r.width * 100); }}
-      box.addEventListener('pointerdown', e => {{ touched = true; box.setPointerCapture(e.pointerId); fromEvent(e); }});
-      box.addEventListener('pointermove', e => {{ if (e.buttons || e.pointerType === 'touch') fromEvent(e); }});
-      box.addEventListener('keydown', e => {{
-        if (e.key === 'ArrowLeft') {{ touched = true; set(pct - 4); }}
-        if (e.key === 'ArrowRight') {{ touched = true; set(pct + 4); }}
-      }});
-      // One-time intro sweep: right, left, back to centre.
-      if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {{
-        const t0 = performance.now(), dur = 2600;
-        (function sweep(t) {{
-          if (touched) return;
-          const p = Math.min(1, (t - t0) / dur);
-          set(50 + 48 * Math.sin(p * Math.PI * 2) * (1 - p * 0.15));
-          if (p < 1) requestAnimationFrame(sweep); else set(50);
-        }})(t0);
-      }}
-      set(50);
-    </script>
-    """
-    components.html(html, height=height)
+    demo = create_ui(chat_fn=dummy_chat)
+    demo.launch(server_name="0.0.0.0", server_port=7860, share=False)
