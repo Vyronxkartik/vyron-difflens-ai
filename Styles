@@ -183,3 +183,72 @@ h1, h2, h3, h4, .vy-display {
 @media (prefers-reduced-motion: reduce) {
   .stApp::before, .stApp::after, .vy-lens i, .vy-scan::after { animation: none !important; }
 }
+/* ===== Liquid Glass Animated Buttons ===== */
+div.stButton > button {
+  position: relative;
+  overflow: hidden;
+  padding: 0.7rem 1.8rem;
+  border-radius: 999px;
+  color: #fff;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -10px 18px rgba(255, 255, 255, 0.05),
+    0 8px 30px rgba(0, 0, 0, 0.35);
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+              box-shadow 0.3s ease, background 0.3s ease;
+  animation: lgFloat 4s ease-in-out infinite;
+}
+
+/* moving shine sweep */
+div.stButton > button::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -120%;
+  width: 80%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    transparent,
+    rgba(255, 255, 255, 0.45),
+    transparent
+  );
+  transform: skewX(-20deg);
+  transition: left 0.7s ease;
+}
+
+div.stButton > button:hover {
+  transform: translateY(-3px) scale(1.04);
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 14px 40px rgba(120, 140, 255, 0.35);
+}
+
+div.stButton > button:hover::before {
+  left: 130%;
+}
+
+div.stButton > button:active {
+  transform: scale(0.96);
+}
+
+div.stButton > button:focus:not(:active) {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+@keyframes lgFloat {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-2px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  div.stButton > button { animation: none !important; }
+}
