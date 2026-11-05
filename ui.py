@@ -1,261 +1,293 @@
-# ui.py
-# Vyron DiffLense AI - Modern UI with professional scrolling animations
+"""ui.py - Glassmorphism UI for VYRON - DiffLens AI (Streamlit)."""
 
-import gradio as gr
-import time
+import streamlit as st
 
-# ====================== CUSTOM CSS ======================
-custom_css = """
-/* ===== Global Smooth Scroll ===== */
-html {
-    scroll-behavior: smooth;
+# ====== CHANGE THIS TO YOUR NAME ======
+OWNER_NAME = "Your Name"
+APP_NAME = "VYRON"
+APP_TAGLINE = "DiffLens AI · Visual Intelligence Workspace"
+
+CSS = """
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap');
+
+:root {
+  --glass-bg: rgba(255, 255, 255, 0.08);
+  --glass-border: rgba(255, 255, 255, 0.22);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
+  --accent1: #7f5af0;
+  --accent2: #2cb67d;
+  --accent3: #00d1ff;
+  --text: #f4f4ff;
+  --muted: rgba(244, 244, 255, 0.65);
 }
 
-/* ===== Base Theme ===== */
-.gradio-container {
-    background: #0a0a0f !important;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
-    max-width: 1200px !important;
-    margin: 0 auto !important;
+html, body, [class*="css"], .stApp {
+  font-family: 'Poppins', sans-serif !important;
+  color: var(--text);
 }
 
-/* ===== Sticky Header ===== */
-.header-bar {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    background: rgba(10, 10, 15, 0.85);
-    backdrop-filter: blur(16px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    padding: 16px 24px;
-    margin-bottom: 32px;
+/* ---------- Animated gradient background ---------- */
+.stApp {
+  background: linear-gradient(-45deg, #0f0c29, #302b63, #24243e, #0b3d5c);
+  background-size: 400% 400%;
+  animation: bgShift 18s ease infinite;
+  background-attachment: fixed;
+}
+@keyframes bgShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
-/* ===== Reveal Animation Classes ===== */
-.reveal {
-    opacity: 0;
-    transform: translateY(48px) scale(0.96);
-    transition: 
-        opacity 0.85s cubic-bezier(0.22, 1, 0.36, 1),
-        transform 0.85s cubic-bezier(0.22, 1, 0.36, 1);
-    will-change: opacity, transform;
+/* Floating blurred orbs */
+.stApp::before, .stApp::after {
+  content: "";
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.45;
+  z-index: 0;
+  pointer-events: none;
+  animation: floatOrb 14s ease-in-out infinite;
+}
+.stApp::before {
+  width: 320px; height: 320px;
+  background: var(--accent1);
+  top: -80px; left: -80px;
+}
+.stApp::after {
+  width: 380px; height: 380px;
+  background: var(--accent3);
+  bottom: -120px; right: -100px;
+  animation-delay: -7s;
+}
+@keyframes floatOrb {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(40px, 60px) scale(1.15); }
 }
 
-.reveal.visible {
-    opacity: 1;
-    transform: translateY(0) scale(1);
+header[data-testid="stHeader"] { background: transparent; }
+.block-container { padding-top: 1.2rem; max-width: 1100px; position: relative; z-index: 1; }
+
+/* ---------- Glass card ---------- */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  border: 1px solid var(--glass-border);
+  border-radius: 22px;
+  box-shadow: var(--glass-shadow);
+  padding: 1.2rem 1.4rem;
+  margin: 0.9rem 0;
+  transition: transform 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease;
+}
+.glass:hover {
+  transform: translateY(-4px);
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 14px 40px rgba(127, 90, 240, 0.35);
 }
 
-/* Stagger delays */
-.reveal.delay-1 { transition-delay: 0.08s; }
-.reveal.delay-2 { transition-delay: 0.16s; }
-.reveal.delay-3 { transition-delay: 0.24s; }
-.reveal.delay-4 { transition-delay: 0.32s; }
-
-/* ===== Cards ===== */
-.card {
-    background: #12121a;
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    border-radius: 16px;
-    padding: 24px;
-    margin-bottom: 20px;
-    transition: border-color 0.3s ease, transform 0.3s ease;
+/* ---------- Scroll-reveal animation ---------- */
+.reveal { animation: fadeUp 0.9s ease both; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(40px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@supports (animation-timeline: view()) {
+  .reveal {
+    animation: fadeUp linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 55%;
+  }
 }
 
-.card:hover {
-    border-color: rgba(99, 102, 241, 0.4);
-    transform: translateY(-2px);
+/* ---------- Hero ---------- */
+.hero { text-align: center; padding: 2.2rem 1rem 1.6rem; }
+.hero h1 {
+  font-size: clamp(2.2rem, 7vw, 4rem);
+  font-weight: 800;
+  letter-spacing: 3px;
+  margin: 0;
+  background: linear-gradient(90deg, var(--accent1), var(--accent3), var(--accent2), var(--accent1));
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: textFlow 6s linear infinite;
+}
+@keyframes textFlow { to { background-position: 300% 0; } }
+.hero p { color: var(--muted); font-weight: 300; margin-top: 0.4rem; font-size: 1.05rem; }
+
+/* ---------- Name badge (always on display) ---------- */
+.name-badge {
+  position: fixed;
+  top: 14px; right: 16px;
+  z-index: 9999;
+  padding: 6px 16px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.3);
+  animation: pulseGlow 3s ease-in-out infinite;
+}
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 8px rgba(127, 90, 240, 0.4); }
+  50% { box-shadow: 0 0 22px rgba(0, 209, 255, 0.7); }
 }
 
-/* ===== Chat Area ===== */
-.chatbot {
-    min-height: 480px !important;
-    border-radius: 16px !important;
-    background: #0f0f16 !important;
-    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+/* ---------- Scrolling marquee ---------- */
+.marquee {
+  overflow: hidden;
+  white-space: nowrap;
+  border-radius: 999px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(12px);
+  padding: 8px 0;
+  margin: 0.6rem 0 1rem;
+}
+.marquee span {
+  display: inline-block;
+  padding-left: 100%;
+  animation: scrollText 22s linear infinite;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+@keyframes scrollText { to { transform: translateX(-100%); } }
+
+/* ---------- Streamlit widgets ---------- */
+.stButton > button, .stDownloadButton > button {
+  background: linear-gradient(135deg, var(--accent1), var(--accent3));
+  color: #fff;
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  padding: 0.6rem 1.4rem;
+  font-weight: 600;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.stButton > button:hover, .stDownloadButton > button:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 10px 28px rgba(0, 209, 255, 0.4);
+  color: #fff;
 }
 
-/* ===== Input ===== */
-.input-row {
-    background: #12121a;
-    border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    padding: 8px;
+[data-testid="stFileUploader"] section {
+  background: var(--glass-bg);
+  border: 2px dashed var(--glass-border);
+  border-radius: 18px;
+  backdrop-filter: blur(10px);
+}
+[data-testid="stFileUploader"] section:hover { border-color: var(--accent3); }
+
+[data-testid="stSidebar"] {
+  background: rgba(15, 12, 41, 0.55) !important;
+  backdrop-filter: blur(18px);
+  border-right: 1px solid var(--glass-border);
 }
 
-/* ===== Buttons ===== */
-.primary-btn {
-    background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
-    border: none !important;
-    border-radius: 12px !important;
-    font-weight: 600 !important;
-    transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+[data-testid="stMetric"] {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 18px;
+  padding: 0.8rem 1rem;
+  backdrop-filter: blur(12px);
 }
 
-.primary-btn:hover {
-    transform: translateY(-1px) !important;
-    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.35) !important;
+.stTabs [data-baseweb="tab-list"] { gap: 8px; }
+.stTabs [data-baseweb="tab"] {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 6px 16px;
+  backdrop-filter: blur(10px);
+}
+.stTabs [aria-selected="true"] { background: rgba(127, 90, 240, 0.35); }
+
+[data-testid="stChatMessage"] {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 18px;
+  backdrop-filter: blur(12px);
+  animation: fadeUp 0.6s ease both;
 }
 
-/* ===== Section Titles ===== */
-.section-title {
-    font-size: 1.4rem;
-    font-weight: 650;
-    letter-spacing: -0.02em;
-    margin-bottom: 16px;
-    color: #f1f1f5;
-}
+img { border-radius: 16px; }
 
-/* ===== Subtle Parallax helper ===== */
-.parallax-slow {
-    transition: transform 0.1s linear;
-}
+/* ---------- Footer ---------- */
+.footer { text-align: center; color: var(--muted); font-size: 0.85rem; padding: 1.6rem 0 0.8rem; }
+.footer b { color: var(--text); }
+
+/* ---------- Scrollbar ---------- */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-thumb { background: linear-gradient(var(--accent1), var(--accent3)); border-radius: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+</style>
 """
 
-# ====================== JS for Scroll Animations ======================
-scroll_js = """
-function initScrollAnimations() {
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('visible');
-            }
-        });
-    }, {
-        threshold: 0.12,
-        rootMargin: "0px 0px -60px 0px"
-    });
 
-    document.querySelectorAll('.reveal').forEach(el => {
-        observer.observe(el);
-    });
-}
-
-// Run after Gradio loads
-document.addEventListener('DOMContentLoaded', initScrollAnimations);
-setTimeout(initScrollAnimations, 800);   // safety for Gradio dynamic load
-setTimeout(initScrollAnimations, 1800);
-"""
-
-# ====================== UI BUILD ======================
-def create_ui(chat_fn, clear_fn=None):
-    with gr.Blocks(
-        css=custom_css,
-        js=scroll_js,
-        title="Vyron DiffLense AI",
-        theme=gr.themes.Base(
-            primary_hue="indigo",
-            neutral_hue="slate",
-            font=["Inter", "system-ui", "sans-serif"]
-        )
-    ) as demo:
-
-        # Sticky Header
-        with gr.Row(elem_classes="header-bar"):
-            gr.Markdown(
-                """
-                <div style="display:flex; align-items:center; gap:12px;">
-                    <div style="width:36px; height:36px; background:linear-gradient(135deg,#6366f1,#8b5cf6); 
-                                border-radius:10px; display:flex; align-items:center; justify-content:center;
-                                font-weight:700; color:white; font-size:18px;">V</div>
-                    <div>
-                        <div style="font-size:1.25rem; font-weight:700; letter-spacing:-0.03em; color:#f8f8ff;">
-                            Vyron DiffLense AI
-                        </div>
-                        <div style="font-size:0.8rem; color:#94a3b8; margin-top:1px;">
-                            Professional visual intelligence
-                        </div>
-                    </div>
-                </div>
-                """,
-                elem_classes="reveal"
-            )
-
-        # Hero / Intro Section
-        with gr.Column(elem_classes="reveal delay-1"):
-            gr.Markdown(
-                """
-                <div class="section-title">What can I help you create or analyze?</div>
-                <p style="color:#94a3b8; margin-top:-8px; margin-bottom:24px;">
-                    Upload images, describe ideas, or ask questions. DiffLense processes with high precision.
-                </p>
-                """
-            )
-
-        # Main Chat Card
-        with gr.Column(elem_classes=["card", "reveal", "delay-2"]):
-            chatbot = gr.Chatbot(
-                label="",
-                height=520,
-                show_label=False,
-                elem_classes="chatbot",
-                avatar_images=(None, "https://api.dicebear.com/7.x/bottts/svg?seed=Vyron"),
-                bubble_full_width=False
-            )
-
-            with gr.Row(elem_classes="input-row"):
-                msg = gr.Textbox(
-                    placeholder="Describe an image, ask for analysis, or give a creative direction...",
-                    show_label=False,
-                    container=False,
-                    scale=6
-                )
-                submit_btn = gr.Button("Send", elem_classes="primary-btn", scale=1)
-
-        # Feature Cards (scroll reveal)
-        with gr.Row():
-            with gr.Column(elem_classes=["card", "reveal", "delay-1"]):
-                gr.Markdown("### 🔍 Precise Analysis")
-                gr.Markdown("Deep visual understanding with structured insights.")
-
-            with gr.Column(elem_classes=["card", "reveal", "delay-2"]):
-                gr.Markdown("### 🎨 Creative Generation")
-                gr.Markdown("High-quality diffusion-style outputs guided by your intent.")
-
-            with gr.Column(elem_classes=["card", "reveal", "delay-3"]):
-                gr.Markdown("### ⚡ Fast Iteration")
-                gr.Markdown("Refine results quickly with natural language.")
-
-        # Footer
-        gr.Markdown(
-            """
-            <div style="text-align:center; color:#64748b; font-size:0.85rem; margin-top:48px; padding-bottom:40px;" 
-                 class="reveal delay-4">
-                Vyron DiffLense AI • Built for clarity and speed
-            </div>
-            """,
-        )
-
-        # Event handlers
-        def user_message(user_msg, history):
-            return "", history + [[user_msg, None]]
-
-        def bot_response(history):
-            user_msg = history[-1][0]
-            # Call your real engine here
-            response = chat_fn(user_msg) if chat_fn else "Processing with DiffLense..."
-            history[-1][1] = response
-            return history
-
-        msg.submit(user_message, [msg, chatbot], [msg, chatbot], queue=False).then(
-            bot_response, chatbot, chatbot
-        )
-        submit_btn.click(user_message, [msg, chatbot], [msg, chatbot], queue=False).then(
-            bot_response, chatbot, chatbot
-        )
-
-        if clear_fn:
-            clear_btn = gr.Button("Clear conversation", variant="secondary")
-            clear_btn.click(clear_fn, None, chatbot)
-
-    return demo
+def inject_css():
+    """Inject all glassmorphism CSS inline (no external file needed)."""
+    st.markdown(CSS, unsafe_allow_html=True)
 
 
-# ====================== Example usage ======================
-if __name__ == "__main__":
-    def dummy_chat(message):
-        time.sleep(0.6)
-        return f"**DiffLense response:**\n\nI analyzed your request: *{message}*\n\nHere's a refined professional interpretation."
+# Backward-compatible aliases in case app.py uses older names
+load_css = inject_css
+load_styles = inject_css
+apply_styles = inject_css
 
-    demo = create_ui(chat_fn=dummy_chat)
-    demo.launch(server_name="0.0.0.0", server_port=7860, share=False)
+
+def name_badge(name: str = OWNER_NAME):
+    st.markdown(f'<div class="name-badge">✨ {name}</div>', unsafe_allow_html=True)
+
+
+def render_header(title: str = APP_NAME, tagline: str = APP_TAGLINE, name: str = OWNER_NAME):
+    inject_css()
+    name_badge(name)
+    st.markdown(
+        f"""
+        <div class="hero reveal">
+          <h1>{title}</h1>
+          <p>{tagline}</p>
+        </div>
+        <div class="marquee">
+          <span>🔍 {title} — compare images with precision &nbsp;•&nbsp; Built by {name}
+          &nbsp;•&nbsp; Upload two images and see every difference &nbsp;•&nbsp; Powered by {tagline}</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def glass_card(title: str = "", body: str = "", icon: str = ""):
+    head = f"<h3 style='margin:0 0 .4rem'>{icon} {title}</h3>" if title else ""
+    st.markdown(
+        f'<div class="glass reveal">{head}<div style="color:var(--muted)">{body}</div></div>',
+        unsafe_allow_html=True,
+    )
+
+
+def section_title(text: str, icon: str = ""):
+    st.markdown(
+        f'<h2 class="reveal" style="margin-top:1.6rem">{icon} {text}</h2>',
+        unsafe_allow_html=True,
+    )
+
+
+def glass_open():
+    st.markdown('<div class="glass reveal">', unsafe_allow_html=True)
+
+
+def glass_close():
+    st.markdown("</div>", unsafe_allow_html=True)
+
+
+def render_footer(name: str = OWNER_NAME):
+    st.markdown(
+        f'<div class="footer reveal">Designed &amp; built by <b>{name}</b> · {APP_NAME} © 2026</div>',
+        unsafe_allow_html=True,
+    )
