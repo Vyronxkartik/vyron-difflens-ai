@@ -1,291 +1,163 @@
+"""VYRON - DiffLens AI (Visual Intelligence Workspace)
 
-import os
-from flask import Flask, request, jsonify, render_template_string
-from openai import OpenAI
-from dotenv import load_dotenv
-
-load_dotenv()
-
-app = Flask(__name__)
-
-API_KEY = os.getenv("OPENAI_API_KEY")
-MODEL = os.getenv("OPENAI_MODEL", "gpt-5.5")
-
-client = OpenAI(api_key=API_KEY) if API_KEY else None
-
-SYSTEM_PROMPT = """
-You are a professional, friendly, intelligent AI assistant.
-Give accurate, clear, and useful answers.
-Explain complex topics in simple language when appropriate.
-If you are uncertain, be honest instead of inventing facts.
-Use readable formatting and concise answers by default.
-Never claim to have performed an action you did not perform.
+Files:
+  app.py          this file: layout and flow
+  engine.py       alignment + difference detection
+  chatbot.py      assistant (Claude if a key is set, offline otherwise)
+  ui.py           animated components
+  assets/styles.css
 """
+import csv
+import io
+import json
 
-HTML = r"""
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Nova AI Chat</title>
-<style>
-* { box-sizing: border-box; }
-body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: #101218;
-    color: #f5f5f5;
-}
-header {
-    padding: 18px;
-    text-align: center;
-    border-bottom: 1px solid #30333d;
-    font-size: 22px;
-    font-weight: bold;
-}
-header span { color: #8b9cff; }
-#chat {
-    max-width: 850px;
-    margin: auto;
-    padding: 20px;
-    height: calc(100dvh - 160px);
-    overflow-y: auto;
-}
-.message {
-    padding: 14px 16px;
-    margin: 12px 0;
-    border-radius: 14px;
-    line-height: 1.6;
-    white-space: pre-wrap;
-    overflow-wrap: anywhere;
-}
-.user {
-    background: #303b67;
-    margin-left: 12%;
-}
-.bot {
-    background: #20232c;
-    margin-right: 8%;
-}
-#composer {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: #101218;
-    padding: 14px;
-    border-top: 1px solid #30333d;
-}
-form {
-    display: flex;
-    gap: 10px;
-    max-width: 850px;
-    margin: auto;
-}
-textarea {
-    flex: 1;
-    resize: none;
-    min-width: 0;
-    height: 52px;
-    padding: 15px;
-    border-radius: 12px;
-    border: 1px solid #414653;
-    background: #20232c;
-    color: white;
-    font: inherit;
-}
-button {
-    border: 0;
-    border-radius: 12px;
-    padding: 0 20px;
-    cursor: pointer;
-    font-weight: bold;
-}
-#send { background: #8b9cff; color: #101218; }
-#reset { background: #30333d; color: white; padding: 10px 16px; }
-button:disabled { opacity: 0.5; cursor: wait; }
-footer { text-align: center; color: #999; font-size: 12px; padding: 8px; }
-</style>
-</head>
-<body>
-<header>✦ Nova <span>AI</span></header>
+import streamlit as st
 
-<div style="text-align:center;padding:12px">
-    <button id="reset" type="button">New conversation</button>
-</div>
+import chatbot
+import engine
+import ui
 
-<main id="chat" aria-live="polite">
-    <div class="message bot">Hello! I'm Nova AI. How can I help you today?</div>
-</main>
+st.set_page_config(
+    page_title="VYRON - DiffLens AI | Compare two images",
+    page_icon="🔍",
+    layout="wide",
+    initial_sidebar_state="collapsed",
+)
+ui.load_css()
+ui.hero()
 
-<div id="composer">
-    <form id="form">
-        <textarea id="input" maxlength="8000"
-            placeholder="Message Nova AI..." required></textarea>
-        <button id="send" type="submit">Send</button>
-    </form>
-    <footer>AI can make mistakes. Verify important information.</footer>
-</div>
-
-<script>
-const chat = document.getElementById("chat");
-const form = document.getElementById("form");
-const input = document.getElementById("input");
-const send = document.getElementById("send");
-const reset = document.getElementById("reset");
-
-let history = [];
-let busy = false;
-
-function addMessage(role, text) {
-    const element = document.createElement("div");
-    element.className = "message " + role;
-    element.textContent = text;
-    chat.appendChild(element);
-    chat.scrollTop = chat.scrollHeight;
-    return element;
-}
-
-form.addEventListener("submit", async (event) => {
-    event.preventDefault();
-
-    const message = input.value.trim();
-    if (!message || busy) return;
-
-    busy = true;
-    send.disabled = true;
-    input.disabled = true;
-    addMessage("user", message);
-    input.value = "";
-
-    const pending = addMessage("bot", "Thinking...");
-    const previousHistory = history.slice();
-
-    try {
-        const response = await fetch("/api/chat", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                message: message,
-                history: previousHistory
-            })
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.error || "The request failed.");
-        }
-
-        pending.textContent = data.reply;
-
-        history.push(
-            { role: "user", content: message },
-            { role: "assistant", content: data.reply }
-        );
-
-        // Keep recent conversation context bounded.
-        history = history.slice(-20);
-
-    } catch (error) {
-        pending.textContent = "Sorry, something went wrong: " + error.message;
-    } finally {
-        busy = false;
-        send.disabled = false;
-        input.disabled = false;
-        input.focus();
-        chat.scrollTop = chat.scrollHeight;
-    }
-});
-
-reset.addEventListener("click", () => {
-    history = [];
-    chat.replaceChildren();
-    addMessage("bot", "New conversation started. How can I help?");
-    input.focus();
-});
-</script>
-</body>
-</html>
-"""
+# ------------------------------------------------------------------ settings
+with st.sidebar:
+    st.markdown("### Settings")
+    sensitivity = st.slider("Sensitivity", 1, 100, 60, help="Higher finds subtler changes, but may flag noise.")
+    min_region = st.slider("Minimum region size (%)", 0.01, 2.0, 0.05, 0.01, help="Ignore changed areas smaller than this share of the image.")
+    smoothing = st.slider("Smoothing", 0, 5, 2, help="Blurs grain and compression noise before comparing.")
+    auto_align = st.toggle("Auto-align image B to A", value=True, help="Fixes small shifts, zoom and tilt between the two photos.")
+    st.caption("Settings apply instantly. Change them and the result refreshes.")
 
 
-@app.get("/")
-def home():
-    return render_template_string(HTML)
+@st.cache_data(show_spinner=False, max_entries=6)
+def run_compare(a_bytes, b_bytes, sens, min_pct, blur, align):
+    return engine.compare(a_bytes, b_bytes, sens, min_pct, blur, align)
 
 
-@app.post("/api/chat")
-def chat_api():
-    if client is None:
-        return jsonify({
-            "error": "API key is missing. Configure OPENAI_API_KEY in your .env file."
-        }), 503
+# ---------------------------------------------------------------- session
+st.session_state.setdefault("chat", [])
+st.session_state.setdefault("analysis", None)
 
-    data = request.get_json(silent=True)
+tab_compare, tab_chat = st.tabs(["Compare", "Assistant"])
 
-    if not isinstance(data, dict):
-        return jsonify({"error": "Send a valid JSON request."}), 400
+# ------------------------------------------------------------------ compare
+with tab_compare:
+    col_a, col_b = st.columns(2)
+    with col_a:
+        up_a = st.file_uploader("Image A (original)", type=["png", "jpg", "jpeg", "webp", "bmp"], key="up_a")
+    with col_b:
+        up_b = st.file_uploader("Image B (changed)", type=["png", "jpg", "jpeg", "webp", "bmp"], key="up_b")
 
-    message = data.get("message")
-    history = data.get("history", [])
+    result = None
+    if not (up_a and up_b):
+        st.session_state["analysis"] = None
+        st.info("Upload both images to start. Photos or screenshots both work.")
+    else:
+        try:
+            bytes_a, bytes_b = up_a.getvalue(), up_b.getvalue()
+            slot = ui.scanning_bar()
+            result = run_compare(bytes_a, bytes_b, sensitivity, min_region, smoothing, auto_align)
+            slot.empty()
+            st.session_state["analysis"] = result.summary()
+        except Exception as exc:
+            st.error(f"Could not compare these images ({type(exc).__name__}). Try a different file format, such as PNG or JPG.")
 
-    if not isinstance(message, str) or not message.strip():
-        return jsonify({"error": "Please enter a message."}), 400
+    if result is not None:
+        top_left, top_right = st.columns([1, 1.4])
+        with top_left:
+            ui.score_ring(result.score, result.verdict)
+        with top_right:
+            changed_tone = "good" if result.changed_pct < 1 else "warn" if result.changed_pct > 10 else ""
+            ui.stat_cards(
+                [
+                    (str(len(result.regions)), "Changed regions", changed_tone),
+                    (f"{result.changed_pct:.2f}%", "Area changed", changed_tone),
+                    (f"{result.ssim:.3f}", "Structure match (SSIM)", ""),
+                    ("Yes" if result.aligned else "No", "Auto-aligned", "good" if result.aligned else ""),
+                ]
+            )
 
-    if len(message) > 8000:
-        return jsonify({"error": "Message is too long."}), 400
+        if auto_align and not result.aligned and result.size:
+            st.caption("Auto-align found too little shared detail, so image B was only resized to match A.")
 
-    if not isinstance(history, list):
-        return jsonify({"error": "Invalid conversation history."}), 400
+        t_swipe, t_marked, t_heat, t_mask = st.tabs(["Swipe A / B", "Marked changes", "Heatmap", "Change mask"])
+        with t_swipe:
+            ui.swipe_compare(engine.to_jpeg_b64(result.img_a), engine.to_jpeg_b64(result.img_b), "A", "B")
+            st.caption("Drag the handle, or use the arrow keys, to reveal the difference.")
+        with t_marked:
+            st.image(result.annotated, use_container_width=True, caption="Numbered boxes match the table below.")
+        with t_heat:
+            st.image(result.heatmap, use_container_width=True, caption="Warmer colors mean stronger change.")
+        with t_mask:
+            st.image(result.mask, use_container_width=True, caption="White areas are detected changes.")
 
-    # Accept only simple user/assistant text messages.
-    safe_history = []
-    for item in history[-20:]:
-        if not isinstance(item, dict):
-            continue
+        st.markdown("#### Changed regions")
+        if result.regions:
+            rows = [
+                {
+                    "Region": r.id,
+                    "Position (x, y)": f"{r.x}, {r.y}",
+                    "Size (px)": f"{r.w} x {r.h}",
+                    "Area %": round(r.area_pct, 2),
+                    "Intensity": round(r.intensity, 1),
+                    "Severity": r.severity,
+                }
+                for r in result.regions
+            ]
+            st.dataframe(rows, use_container_width=True, hide_index=True)
+        else:
+            st.success("No changes found at the current settings. Raise Sensitivity to look for subtler differences.")
 
-        role = item.get("role")
-        content = item.get("content")
+        st.markdown("#### Export")
+        d1, d2, d3, d4 = st.columns(4)
+        d1.download_button("Marked image", engine.to_png_bytes(result.annotated), "vyron_marked.png", "image/png", use_container_width=True)
+        d2.download_button("Heatmap", engine.to_png_bytes(result.heatmap), "vyron_heatmap.png", "image/png", use_container_width=True)
+        d3.download_button("Report (JSON)", json.dumps(result.summary(), indent=2), "vyron_report.json", "application/json", use_container_width=True)
+        buf = io.StringIO()
+        writer = csv.writer(buf)
+        writer.writerow(["region", "x", "y", "width", "height", "area_pct", "intensity", "severity"])
+        for r in result.regions:
+            writer.writerow([r.id, r.x, r.y, r.w, r.h, round(r.area_pct, 3), round(r.intensity, 1), r.severity])
+        d4.download_button("Regions (CSV)", buf.getvalue(), "vyron_regions.csv", "text/csv", use_container_width=True)
 
-        if (
-            role in ("user", "assistant")
-            and isinstance(content, str)
-            and len(content) <= 8000
-        ):
-            safe_history.append({
-                "role": role,
-                "content": content
-            })
-
-    try:
-        response = client.responses.create(
-            model=MODEL,
-            instructions=SYSTEM_PROMPT,
-            input=safe_history + [
-                {"role": "user", "content": message.strip()}
-            ],
-            max_output_tokens=1200
-        )
-
-        reply = response.output_text
-
-        if not reply:
-            reply = "I couldn't generate a response. Please try again."
-
-        return jsonify({"reply": reply})
-
-    except Exception:
-        app.logger.exception("AI response generation failed")
-        return jsonify({
-            "error": "The AI service could not complete your request. Check your API configuration and try again."
-        }), 502
-
-
-if __name__ == "__main__":
-    app.run(
-        host="127.0.0.1",
-        port=int(os.getenv("PORT", "5000")),
-        debug=False
+# ---------------------------------------------------------------- assistant
+with tab_chat:
+    live = chatbot.has_api_key(st.secrets)
+    st.caption(
+        "Live AI assistant is on." if live
+        else "Built-in assistant is on. Add ANTHROPIC_API_KEY in your Streamlit secrets for the live AI version."
     )
+    st.caption("The assistant sees only the numbers from your comparison, never your photos.")
+
+    pending = None
+    chip_cols = st.columns(2)
+    for i, prompt in enumerate(chatbot.QUICK_PROMPTS):
+        if chip_cols[i % 2].button(prompt, key=f"chip{i}", use_container_width=True):
+            pending = prompt
+
+    typed = st.chat_input("Ask about your comparison...")
+    question = typed or pending
+
+    if question:
+        reply = chatbot.ask(question, st.session_state["chat"], st.session_state["analysis"], st.secrets)
+        st.session_state["chat"] += [
+            {"role": "user", "content": question},
+            {"role": "assistant", "content": reply},
+        ]
+
+    if not st.session_state["chat"]:
+        with st.chat_message("assistant"):
+            st.write("Hi, I'm the VYRON assistant. Upload two images, then ask me what changed or how to tune the result.")
+    for m in st.session_state["chat"]:
+        with st.chat_message(m["role"]):
+            st.markdown(m["content"])
+    if st.session_state["chat"] and st.button("Clear chat"):
+        st.session_state["chat"] = []
+        st.rerun()
