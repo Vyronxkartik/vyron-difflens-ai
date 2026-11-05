@@ -10,9 +10,11 @@ ASSETS = Path(__file__).parent
 
 
 def load_css() -> None:
-    css = (ASSETS / "Styles").read_text(encoding="utf-8")
-    st.markdown(f"<style>{css}</style>", unsafe_allow_html=True) 
-
+    for p in ASSETS.rglob("*"):
+        if p.is_file() and p.name.lower().startswith("styles"):
+            css = p.read_text(encoding="utf-8")
+            st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
+            return
 
 def hero() -> None:
     st.markdown(
